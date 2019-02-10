@@ -1,0 +1,131 @@
+
+import java.util.Scanner;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+public class FinalCalculator {
+
+	public static void main(String[] args) {
+
+		/* ScriptEngine interface has been used to evaluate the arithmetic expression */
+		
+		ScriptEngine engine = new ScriptEngineManager().getEngineByExtension("js");
+		Scanner scan = new Scanner(System.in);
+		System.out.println("Enter number of expressions: ");
+		int number = scan.nextInt();
+
+		for (int i = 1; i <= number; i++) {
+			System.out.println("Enter expression: ");
+			String input = scan.next();
+			if (isValidExpression(input)) {
+				calculate(i, calculatePower(input), engine);
+			} else
+				System.out.println("Case #" + i + ": INVALID EXPRESSION");
+
+		}
+		scan.close();
+	}
+
+	/* To check if current character is operator */
+	
+	private static boolean isAnOperator(char c) {
+		return (c == '*' || c == '/' || c == '+' || c == '-' || c == '^');
+	}
+
+	/* To check if string is valid arithmetic expression*/
+	
+	private static boolean isValidExpression(String expression) {
+		// TEST: False if expression starts or ends with an operator
+		if (isAnOperator(expression.charAt(0)) || isAnOperator(expression.charAt(expression.length() - 1)))
+			return false;
+
+		// set initial counters
+		int parenthCount = 0;
+		int opCount = 0;
+
+		for (int i = 0; i < expression.length(); i++) {
+			if (expression.charAt(i) == '(') {
+				// keep count of every '('
+				parenthCount++; 
+				
+				// TEST:  False if expression ends with '('
+				if (i == expression.length() - 1)
+					return false;
+				if (i > 0 && !isAnOperator(expression.charAt(i - 1)) && expression.charAt(i - 1) != '(')
+					return false;
+			}
+			if (expression.charAt(i) == ')') {
+				// for every ')' reduce the counter. This indicates that earlier '(' has been closed 
+				parenthCount--;
+				// TEST: False if expression starts with ')'
+				if (i == 1)
+					return false;
+				if (i < expression.length() - 1 && !isAnOperator(expression.charAt(i + 1)) && expression.charAt(i + 1) != ')')
+					return false;
+
+			}
+			if (isAnOperator(expression.charAt(i))) {
+				opCount++;
+				/* TEST: if operator is not preceded or followed by digit and valid parantheses */
+				if (i > 0 && i < expression.length() - 1) {
+					if ((expression.charAt(i - 1) != ')' && !Character.isDigit(expression.charAt(i - 1)))
+							|| (expression.charAt(i + 1) != '(' && !Character.isDigit(expression.charAt(i + 1))))
+						return false;
+				}
+			}
+
+		}
+		// TEST: False if test has mismatching number of opening and closing parantheses
+		if (parenthCount > 0)
+			return false;
+		// TEST: False if expression is not having any operator
+		if (opCount == 0)
+			return false;
+		// LAST TEST: All preceding checks ensure that by this point, all test cases are passed successfully
+		return true;
+	}
+
+	/*Use eval method of ScriptEngine to evaluate expression*/
+	
+	private static void calculate(int n, String input, ScriptEngine engine) {
+		try {
+			Object result = engine.eval(input);
+			System.out.println("Case #" + n + ": " + result);
+		} catch (ScriptException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*Calculate the power of numbers*/
+	
+	private static String calculatePower(String input) {
+		StringBuilder afterString = new StringBuilder(input);
+		StringBuilder val1 = new StringBuilder();
+		StringBuilder val2 = new StringBuilder();
+		int i = 1;
+		while (i < afterString.length() - 1) {
+			if (afterString.charAt(i) == '^') {
+				int j = i - 1, k = i + 1;
+				while (afterString.charAt(j) >= '0' && afterString.charAt(j) <= '9') {
+					val1.append(afterString.charAt(j));
+					j--;
+				}
+				while (afterString.charAt(k) >= '0' && afterString.charAt(k) <= '9') {
+					val2.append(afterString.charAt(k));
+					k++;
+				}
+
+				Integer result = (int) Math.pow(Integer.parseInt(String.valueOf(val1.toString())),Integer.parseInt(String.valueOf(val2.toString())));
+				val1.delete(0, val1.length());
+				val2.delete(0, val2.length());
+				afterString.replace(j + 1, k, result.toString());
+			}
+			i++;
+		}
+
+		return afterString.toString();
+	}
+
+}
